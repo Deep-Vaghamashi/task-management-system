@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url = env("DATABASE_URL")
+}
+
+model User {
+  UserID       Int            @id @default(autoincrement())
+  UserName     String         @unique @db.VarChar(50)
+  Email        String         @unique @db.VarChar(100)
+  PasswordHash String         @db.VarChar(255)
+  CreatedAt    DateTime       @default(now())
+
+  // Relationships
+  UserRoles    UserRole[]
+  Projects     Project[]      @relation("ProjectCreator")
+  Tasks        Task[]         @relation("TaskAssignee")
+  Comments     TaskComment[]
+  History      TaskHistory[]
+}
+
+model Role {
+  RoleID   Int        @id @default(autoincrement())
+  RoleName String     @unique @db.VarChar(50) // e.g., 'Admin', 'Employee'
+
+  // Relationships
+  UserRoles UserRole[]
+}
+
+model UserRole {
+  UserRoleID Int @id @default(autoincrement())
+  UserID     Int
+  RoleID     Int
+
+  User User @relation(fields: [UserID], references: [UserID])
+  Role Role @relation(fields: [RoleID], references: [RoleID])
+}
+
+model Project {
+  ProjectID   Int      @id @default(autoincrement())
+  ProjectName String   @db.VarChar(100)
+  Description String?  @db.VarChar(255)
+  CreatedBy   Int
+  CreatedAt   DateTime @default(now())
+
+  Creator   User       @relation("ProjectCreator", fields: [CreatedBy], references: [UserID])
+  TaskLists TaskList[]
+}
+
+model TaskList {
+  ListID    Int    @id @default(autoincrement())
+  ProjectID Int
+  ListName  String @db.VarChar(100) // e.g., 'Pending', 'In Progress'
+
+  Project Project @relation(fields: [ProjectID], references: [ProjectID])
+  Tasks   Task[]
+}
+
+model Task {
+  TaskID      Int       @id @default(autoincrement())
+  ListID      Int
+  AssignedTo  Int?      
+  Title       String    @db.VarChar(100)
+  Description String?   @db.VarChar(255)
+  Priority    String    @default("Medium") 
+  Status      String    @default("Pending")
+  DueDate     DateTime? @db.Date
+  CreatedAt   DateTime  @default(now())
+
+  TaskList    TaskList      @relation(fields: [ListID], references: [ListID])
+  Assignee    User?         @relation("TaskAssignee", fields: [AssignedTo], references: [UserID])
+  Comments    TaskComment[]
+  History     TaskHistory[]
+}
+
+model TaskComment {
+  CommentID   Int      @id @default(autoincrement())
+  TaskID      Int
+  UserID      Int
+  CommentText String   @db.VarChar(255)
+  CreatedAt   DateTime @default(now())
+
+  Task Task @relation(fields: [TaskID], references: [TaskID])
+  User User @relation(fields: [UserID], references: [UserID])
+}
+
+model TaskHistory {
+  HistoryID  Int      @id @default(autoincrement())
+  TaskID     Int
+  ChangedBy  Int
+  ChangeType String   @db.VarChar(50) 
+  ChangeTime DateTime @default(now())
+
+  Task Task @relation(fields: [TaskID], references: [TaskID])
+  User User @relation(fields: [ChangedBy], references: [UserID])
+}

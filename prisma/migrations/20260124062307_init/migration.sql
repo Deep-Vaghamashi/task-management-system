@@ -1,0 +1,117 @@
+-- CreateTable
+CREATE TABLE `User` (
+    `UserID` INTEGER NOT NULL AUTO_INCREMENT,
+    `UserName` VARCHAR(50) NOT NULL,
+    `Email` VARCHAR(100) NOT NULL,
+    `PasswordHash` VARCHAR(255) NOT NULL,
+    `CreatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    UNIQUE INDEX `User_UserName_key`(`UserName`),
+    UNIQUE INDEX `User_Email_key`(`Email`),
+    PRIMARY KEY (`UserID`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Role` (
+    `RoleID` INTEGER NOT NULL AUTO_INCREMENT,
+    `RoleName` VARCHAR(50) NOT NULL,
+
+    UNIQUE INDEX `Role_RoleName_key`(`RoleName`),
+    PRIMARY KEY (`RoleID`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `UserRole` (
+    `UserRoleID` INTEGER NOT NULL AUTO_INCREMENT,
+    `UserID` INTEGER NOT NULL,
+    `RoleID` INTEGER NOT NULL,
+
+    PRIMARY KEY (`UserRoleID`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Project` (
+    `ProjectID` INTEGER NOT NULL AUTO_INCREMENT,
+    `ProjectName` VARCHAR(100) NOT NULL,
+    `Description` VARCHAR(255) NULL,
+    `CreatedBy` INTEGER NOT NULL,
+    `CreatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`ProjectID`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `TaskList` (
+    `ListID` INTEGER NOT NULL AUTO_INCREMENT,
+    `ProjectID` INTEGER NOT NULL,
+    `ListName` VARCHAR(100) NOT NULL,
+
+    PRIMARY KEY (`ListID`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Task` (
+    `TaskID` INTEGER NOT NULL AUTO_INCREMENT,
+    `ListID` INTEGER NOT NULL,
+    `AssignedTo` INTEGER NULL,
+    `Title` VARCHAR(100) NOT NULL,
+    `Description` VARCHAR(255) NULL,
+    `Priority` VARCHAR(191) NOT NULL DEFAULT 'Medium',
+    `Status` VARCHAR(191) NOT NULL DEFAULT 'Pending',
+    `DueDate` DATE NULL,
+    `CreatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`TaskID`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `TaskComment` (
+    `CommentID` INTEGER NOT NULL AUTO_INCREMENT,
+    `TaskID` INTEGER NOT NULL,
+    `UserID` INTEGER NOT NULL,
+    `CommentText` VARCHAR(255) NOT NULL,
+    `CreatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`CommentID`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `TaskHistory` (
+    `HistoryID` INTEGER NOT NULL AUTO_INCREMENT,
+    `TaskID` INTEGER NOT NULL,
+    `ChangedBy` INTEGER NOT NULL,
+    `ChangeType` VARCHAR(50) NOT NULL,
+    `ChangeTime` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`HistoryID`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `UserRole` ADD CONSTRAINT `UserRole_UserID_fkey` FOREIGN KEY (`UserID`) REFERENCES `User`(`UserID`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `UserRole` ADD CONSTRAINT `UserRole_RoleID_fkey` FOREIGN KEY (`RoleID`) REFERENCES `Role`(`RoleID`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Project` ADD CONSTRAINT `Project_CreatedBy_fkey` FOREIGN KEY (`CreatedBy`) REFERENCES `User`(`UserID`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `TaskList` ADD CONSTRAINT `TaskList_ProjectID_fkey` FOREIGN KEY (`ProjectID`) REFERENCES `Project`(`ProjectID`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Task` ADD CONSTRAINT `Task_ListID_fkey` FOREIGN KEY (`ListID`) REFERENCES `TaskList`(`ListID`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Task` ADD CONSTRAINT `Task_AssignedTo_fkey` FOREIGN KEY (`AssignedTo`) REFERENCES `User`(`UserID`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `TaskComment` ADD CONSTRAINT `TaskComment_TaskID_fkey` FOREIGN KEY (`TaskID`) REFERENCES `Task`(`TaskID`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `TaskComment` ADD CONSTRAINT `TaskComment_UserID_fkey` FOREIGN KEY (`UserID`) REFERENCES `User`(`UserID`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `TaskHistory` ADD CONSTRAINT `TaskHistory_TaskID_fkey` FOREIGN KEY (`TaskID`) REFERENCES `Task`(`TaskID`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `TaskHistory` ADD CONSTRAINT `TaskHistory_ChangedBy_fkey` FOREIGN KEY (`ChangedBy`) REFERENCES `User`(`UserID`) ON DELETE RESTRICT ON UPDATE CASCADE;
