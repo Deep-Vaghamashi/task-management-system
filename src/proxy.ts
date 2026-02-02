@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // 1. Get the token from the cookies
   const token = request.cookies.get('token')?.value;
 
@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // 3. If the token is there, let them pass! ✅
+  // 3. If the token is there, let them pass!
   return NextResponse.next();
 }
 

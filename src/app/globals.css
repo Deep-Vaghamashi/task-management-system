@@ -1,26 +1,147 @@
 @import "tailwindcss";
 
+@theme {
+  /* Color Palette */
+  --color-background: hsl(var(--background) / <alpha-value>);
+  --color-foreground: hsl(var(--foreground) / <alpha-value>);
+
+  --color-card: hsl(var(--card) / <alpha-value>);
+  --color-card-foreground: hsl(var(--card-foreground) / <alpha-value>);
+
+  --color-popover: hsl(var(--popover) / <alpha-value>);
+  --color-popover-foreground: hsl(var(--popover-foreground) / <alpha-value>);
+
+  --color-primary: hsl(var(--primary) / <alpha-value>);
+  --color-primary-foreground: hsl(var(--primary-foreground) / <alpha-value>);
+
+  --color-secondary: hsl(var(--secondary) / <alpha-value>);
+  --color-secondary-foreground: hsl(var(--secondary-foreground) / <alpha-value>);
+
+  --color-muted: hsl(var(--muted) / <alpha-value>);
+  --color-muted-foreground: hsl(var(--muted-foreground) / <alpha-value>);
+
+  --color-accent: hsl(var(--accent) / <alpha-value>);
+  --color-accent-foreground: hsl(var(--accent-foreground) / <alpha-value>);
+
+  --color-destructive: hsl(var(--destructive) / <alpha-value>);
+  --color-destructive-foreground: hsl(var(--destructive-foreground) / <alpha-value>);
+
+  --color-border: hsl(var(--border) / <alpha-value>);
+  --color-input: hsl(var(--input) / <alpha-value>);
+  --color-ring: hsl(var(--ring) / <alpha-value>);
+
+  --color-chart-1: hsl(var(--chart-1) / <alpha-value>);
+  --color-chart-2: hsl(var(--chart-2) / <alpha-value>);
+  --color-chart-3: hsl(var(--chart-3) / <alpha-value>);
+  --color-chart-4: hsl(var(--chart-4) / <alpha-value>);
+  --color-chart-5: hsl(var(--chart-5) / <alpha-value>);
+
+  /* Sidebar Specific Colors */
+  --color-sidebar: hsl(var(--sidebar) / <alpha-value>);
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground) / <alpha-value>);
+  --color-sidebar-primary: hsl(var(--sidebar-primary) / <alpha-value>);
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground) / <alpha-value>);
+  --color-sidebar-accent: hsl(var(--sidebar-accent) / <alpha-value>);
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground) / <alpha-value>);
+  --color-sidebar-border: hsl(var(--sidebar-border) / <alpha-value>);
+  --color-sidebar-ring: hsl(var(--sidebar-ring) / <alpha-value>);
+
+  /* Border Radius */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Fonts */
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+}
+
+/* Light theme colors */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 296 55.5556% 21.1765%;
+  --primary: 333.2673 42.9787% 46.0784%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 314.6667 61.6438% 85.6863%;
+  --secondary-foreground: 295.8333 40.9091% 34.5098%;
+  --muted: 310.5882 48.5714% 93.1373%;
+  --muted-foreground: 295.5224 32.6829% 40.1961%;
+  --accent: 314.6667 61.6438% 85.6863%;
+  --accent-foreground: 295.8333 40.9091% 34.5098%;
+  --destructive: 357.6923 43.6975% 46.6667%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 304.8000 60.9756% 83.9216%;
+  --input: 317.3684 44.1860% 83.1373%;
+  --ring: 333.3333 71.4286% 50.5882%;
+  --chart-1: 318.4358 70.1961% 50%;
+  --chart-2: 272.3353 82.2660% 39.8039%;
+  --chart-3: 197.3333 36.5854% 24.1176%;
+  --chart-4: 43.1250 73.5632% 65.8824%;
+  --chart-5: 27.1233 86.9048% 67.0588%;
+  --sidebar: 290.0000 50% 92.9412%;
+  --sidebar-foreground: 327.2000 77.3196% 38.0392%;
+  --sidebar-primary: 240 9.8039% 30%;
+  --sidebar-primary-foreground: 320.0000 47.3684% 96.2745%;
+  --sidebar-accent: 60 6.6667% 97.0588%;
+  --sidebar-accent-foreground: 240 9.8039% 30%;
+  --sidebar-border: 20.0000 7.3171% 91.9608%;
+  --sidebar-ring: 333.3333 71.4286% 50.5882%;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --radius: 0.5rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  --background: 270 14.7059% 13.3333%;
+  --foreground: 272.3077 28.2609% 81.9608%;
+  --card: 270 13.6364% 17.2549%;
+  --card-foreground: 324.5455 23.4043% 81.5686%;
+  --popover: 320 23.0769% 5.0980%;
+  --popover-foreground: 325.7143 33.3333% 95.8824%;
+  --primary: 332.0245 100% 31.9608%;
+  --primary-foreground: 329.3617 59.4937% 84.5098%;
+  --secondary: 273.7500 15.0943% 20.7843%;
+  --secondary-foreground: 270.0000 30.2326% 83.1373%;
+  --muted: 272.7273 13.9241% 15.4902%;
+  --muted-foreground: 268.8000 20.6612% 76.2745%;
+  --accent: 272.1429 20.2899% 27.0588%;
+  --accent-foreground: 325.7143 33.3333% 95.8824%;
+  --destructive: 350.6250 50% 12.5490%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 326.6667 8.2569% 21.3725%;
+  --input: 312 8.7719% 22.3529%;
+  --ring: 333.3333 71.4286% 50.5882%;
+  --chart-1: 333.2673 42.9787% 46.0784%;
+  --chart-2: 273.3333 54.7826% 54.9020%;
+  --chart-3: 30.0000 80% 54.9020%;
+  --chart-4: 280 64.7059% 60%;
+  --chart-5: 339.7674 74.7826% 54.9020%;
+  --sidebar: 308.5714 17.0732% 8.0392%;
+  --sidebar-foreground: 327.2727 26.1905% 83.5294%;
+  --sidebar-primary: 224.2781 76.3265% 48.0392%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 318.4615 20.6349% 12.3529%;
+  --sidebar-accent-foreground: 240 4.7619% 95.8824%;
+  --sidebar-border: 0 0% 0%;
+  --sidebar-ring: 333.3333 71.4286% 50.5882%;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    border-color: var(--border);
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
 }
