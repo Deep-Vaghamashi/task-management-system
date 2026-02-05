@@ -49,6 +49,8 @@ model Project {
   ProjectID   Int      @id @default(autoincrement())
   ProjectName String   @db.VarChar(100)
   Description String?  @db.VarChar(255)
+  Status      String   @default("Active") @db.VarChar(20)
+  DueDate     DateTime? @db.Date
   CreatedBy   Int
   CreatedAt   DateTime @default(now())
 

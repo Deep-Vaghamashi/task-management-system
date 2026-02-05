@@ -7,6 +7,30 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { Sidebar } from '@/components/dashboard/sidebar';
 
 export function MobileNav() {
+    const [isMounted, setIsMounted] = React.useState(false);
+    const [open, setOpen] = React.useState(false);
+
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    if (!isMounted) {
+        return (
+            <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-30">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                        <span className="font-bold text-primary text-lg">DL</span>
+                    </div>
+                    <span className="font-bold text-lg tracking-tight">Daily Life</span>
+                </div>
+                <Button variant="ghost" size="icon" disabled>
+                    <Menu className="w-5 h-5" />
+                    <span className="sr-only">Open menu</span>
+                </Button>
+            </div>
+        );
+    }
+
     return (
         <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-30">
             <div className="flex items-center gap-2">
@@ -17,7 +41,7 @@ export function MobileNav() {
                 <span className="font-bold text-lg tracking-tight">Daily Life</span>
             </div>
 
-            <Sheet>
+            <Sheet open={open} onOpenChange={setOpen}>
                 <SheetTrigger asChild>
                     <Button variant="ghost" size="icon">
                         <Menu className="w-5 h-5" />
@@ -26,7 +50,7 @@ export function MobileNav() {
                 </SheetTrigger>
                 <SheetContent side="left" className="p-0 w-[280px]">
                     <SheetTitle className="sr-only">Navigation</SheetTitle>
-                    <Sidebar className="border-none w-full" />
+                    <Sidebar className="border-none w-full" onClose={() => setOpen(false)} />
                 </SheetContent>
             </Sheet>
         </div>

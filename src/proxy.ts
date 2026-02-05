@@ -17,5 +17,5 @@ export function proxy(request: NextRequest) {
 
 // 4. Configure which paths this Guard protects
 export const config = {
-  matcher: ['/dashboard/:path*'], // Protects /dashboard and any sub-pages
+  matcher: ['/dashboard/:path*','/tasks/:path*'], // Protects /dashboard and any sub-pages
 };

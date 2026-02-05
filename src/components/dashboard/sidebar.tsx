@@ -51,7 +51,7 @@ export function Sidebar({ className, onClose }: SidebarProps) {
 
     return (
         <div className={cn(
-            "fixed left-0 top-0 h-screen w-[70px] bg-card border-r border-border text-card-foreground flex flex-col z-50 transition-all duration-300 ease-in-out group hover:w-[240px] shadow-xl",
+            "fixed left-0 top-0 h-screen w-[70px] bg-card border-r border-border text-card-foreground backdrop-blur-md flex flex-col z-50 transition-all duration-300 ease-in-out group hover:w-[240px] shadow-xl",
             className
         )}>
 
