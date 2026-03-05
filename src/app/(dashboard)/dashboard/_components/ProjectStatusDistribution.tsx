@@ -1,30 +1,48 @@
 import { Progress } from "@/components/ui/progress"
 
-export function ProjectStatusDistribution() {
+interface ProjectStatusDistributionProps {
+  active: number;
+  onHold: number;
+  completed: number;
+}
+
+export function ProjectStatusDistribution({ active, onHold, completed }: ProjectStatusDistributionProps) {
+    const total = active + onHold + completed;
+
+    // Helper to avoid dividing by zero if there are no projects
+    const getPercentage = (value: number) => {
+        if (total === 0) return 0;
+        return Math.round((value / total) * 100);
+    };
+
     return (
         <div className="space-y-6">
+            {/* Active Projects */}
             <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">On Track</span>
-                    <span className="text-muted-foreground">12/15</span>
+                    <span className="font-medium">Active (Running)</span>
+                    <span className="text-muted-foreground">{active}/{total}</span>
                 </div>
-                <Progress value={80} className="h-2" />
+                <Progress value={getPercentage(active)} className="h-2" />
             </div>
 
+            {/* On Hold Projects */}
             <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">At Risk</span>
-                    <span className="text-muted-foreground">2/15</span>
+                    <span className="font-medium">On Hold</span>
+                    <span className="text-muted-foreground">{onHold}/{total}</span>
                 </div>
-                <Progress value={15} className="h-2 [&>div]:bg-yellow-500" /> {/* Custom color override if needed, but standard variant is safer. Using utility class on parent or indicator */}
+                {/* Note: We use a utility class or inline style for custom colors if your theme supports it */}
+                <Progress value={getPercentage(onHold)} className="h-2 [&>div]:bg-yellow-500" />
             </div>
 
+            {/* Completed Projects */}
             <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">Delayed</span>
-                    <span className="text-muted-foreground">1/15</span>
+                    <span className="font-medium">Completed</span>
+                    <span className="text-muted-foreground">{completed}/{total}</span>
                 </div>
-                <Progress value={6} className="h-2 [&>div]:bg-red-500" />
+                <Progress value={getPercentage(completed)} className="h-2 [&>div]:bg-green-500" />
             </div>
         </div>
     )

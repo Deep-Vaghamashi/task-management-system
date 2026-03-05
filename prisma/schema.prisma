@@ -19,30 +19,43 @@ model User {
   Email        String         @unique @db.VarChar(100)
   PasswordHash String         @db.VarChar(255)
   CreatedAt    DateTime       @default(now())
+  Role         String         @default("Manager")
 
   // Relationships
-  UserRoles    UserRole[]
   Projects     Project[]      @relation("ProjectCreator")
   Tasks        Task[]         @relation("TaskAssignee")
   Comments     TaskComment[]
   History      TaskHistory[]
+  ProjectMemberships ProjectMember[]
 }
 
-model Role {
-  RoleID   Int        @id @default(autoincrement())
-  RoleName String     @unique @db.VarChar(50) // e.g., 'Admin', 'Employee'
+//model Role {
+//  RoleID   Int        @id @default(autoincrement())
+//  RoleName String     @unique @db.VarChar(50) // e.g., 'Admin', 'Employee'
+//
+//  // Relationships
+//  UserRoles UserRole[]
+//}
 
-  // Relationships
-  UserRoles UserRole[]
-}
+//model UserRole {
+//  UserRoleID Int @id @default(autoincrement())
+//  UserID     Int
+//  RoleID     Int
 
-model UserRole {
-  UserRoleID Int @id @default(autoincrement())
-  UserID     Int
-  RoleID     Int
+//  User User @relation(fields: [UserID], references: [UserID])
+//  Role Role @relation(fields: [RoleID], references: [RoleID])
+//}
 
-  User User @relation(fields: [UserID], references: [UserID])
-  Role Role @relation(fields: [RoleID], references: [RoleID])
+model ProjectMember {
+  ProjectID Int
+  UserID    Int
+  JoinedAt  DateTime @default(now())
+  Role      String   @default("Member") @db.VarChar(20) // e.g. 'Owner', 'Member'
+
+  Project   Project @relation(fields: [ProjectID], references: [ProjectID])
+  User      User    @relation(fields: [UserID], references: [UserID])
+
+  @@id([ProjectID, UserID]) // This makes sure a user can't join the same project twice
 }
 
 model Project {
@@ -56,6 +69,7 @@ model Project {
 
   Creator   User       @relation("ProjectCreator", fields: [CreatedBy], references: [UserID])
   TaskLists TaskList[]
+  Members     ProjectMember[]
 }
 
 model TaskList {

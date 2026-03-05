@@ -1,5 +1,3 @@
-"use client";
-
 import React from 'react';
 import { Sidebar } from '@/components/dashboard/sidebar';
 import { Header } from '@/components/dashboard/header';
@@ -13,24 +11,24 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-background text-foreground">
 
-      {/* 1. Sidebar (Fixed) */}
+      {/* Desktop Sidebar (Fixed, hidden on mobile) */}
       <div className="hidden md:block">
         <Sidebar />
       </div>
 
-      {/* 2. Main Content Wrapper */}
+      {/* Main Content Area — offset by sidebar width */}
       <div className="flex flex-col min-h-screen transition-[margin] duration-300 md:ml-[70px]">
 
-        {/* Mobile Nav (Hide on desktop) */}
+        {/* Mobile Navigation Bar (visible on mobile only) */}
         <MobileNav />
 
-        {/* 3. Header */}
-        <div className="hidden md:block">
+        {/* Desktop Header with Breadcrumbs (visible on desktop only) */}
+        <div className="hidden md:block sticky top-0 z-40">
           <Header />
         </div>
 
-        {/* 4. Page Content */}
-        <main className="flex-1 p-0 relative">
+        {/* Page Content */}
+        <main className="flex-1 relative">
           {children}
         </main>
       </div>

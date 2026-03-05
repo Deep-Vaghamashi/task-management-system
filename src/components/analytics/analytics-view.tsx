@@ -52,6 +52,13 @@ const ICON_MAP: Record<string, React.ElementType> = {
     Users
 }
 
+const KPI_COLORS = [
+    { color: "text-violet-500", bg: "bg-violet-500/10" },
+    { color: "text-blue-500", bg: "bg-blue-500/10" },
+    { color: "text-amber-500", bg: "bg-amber-500/10" },
+    { color: "text-red-500", bg: "bg-red-500/10" },
+]
+
 // Type Definitions
 interface KPIData {
     label: string
@@ -70,7 +77,7 @@ interface AnalyticsViewProps {
     }
 }
 
-const CHART_COLORS = ["#2563eb", "#22c55e", "#eab308", "#ef4444", "#8b5cf6"]
+const CHART_COLORS = ["#8b5cf6", "#2563eb", "#f59e0b", "#ef4444", "#22c55e"]
 
 export function AnalyticsView({ data }: AnalyticsViewProps) {
     const [timeRange, setTimeRange] = React.useState("30d")
@@ -114,15 +121,18 @@ export function AnalyticsView({ data }: AnalyticsViewProps) {
             {/* KPI Row */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {data.kpi.map((item, index) => {
-                    const Icon = ICON_MAP[item.icon] || Activity // Fallback icon
+                    const Icon = ICON_MAP[item.icon] || Activity
+                    const kpiColor = KPI_COLORS[index % KPI_COLORS.length]
 
                     return (
-                        <Card key={index}>
+                        <Card key={index} className="transition-all hover:shadow-md">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">
+                                <CardTitle className="text-sm font-medium text-muted-foreground">
                                     {item.label}
                                 </CardTitle>
-                                <Icon className="h-4 w-4 text-muted-foreground" />
+                                <div className={`p-2 rounded-md ${kpiColor.bg}`}>
+                                    <Icon className={`h-4 w-4 ${kpiColor.color}`} />
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">{item.value}</div>
@@ -135,7 +145,6 @@ export function AnalyticsView({ data }: AnalyticsViewProps) {
                                     <span className={item.trend === "up" ? "text-green-500" : item.trend === "down" ? "text-red-500" : ""}>
                                         {item.change}
                                     </span>
-                                    <span className="ml-1">from last month</span>
                                 </p>
                             </CardContent>
                         </Card>
@@ -264,9 +273,9 @@ export function AnalyticsView({ data }: AnalyticsViewProps) {
                                     contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}
                                     itemStyle={{ color: 'hsl(var(--foreground))' }}
                                 />
-                                <Bar dataKey="activeTasks" fill="#adfa1d" radius={[4, 4, 0, 0]}>
+                                <Bar dataKey="activeTasks" radius={[4, 4, 0, 0]}>
                                     {data.teamWorkload.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={index % 2 === 0 ? "#2563eb" : "#1e40af"} />
+                                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                                     ))}
                                 </Bar>
                             </BarChart>

@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { sign } from "jsonwebtoken";
-
-const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   try {
@@ -40,9 +38,9 @@ export async function POST(request: Request) {
 
     // 4. Create a JWT token
     const token = sign(
-      { userId: user.UserID, username: user.UserName }, 
-      process.env.JWT_SECRET!,                          
-      { expiresIn: "1h" }                               
+      { userId: user.UserID, username: user.UserName },
+      process.env.JWT_SECRET!,
+      { expiresIn: "1h" }
     );
 
     const response = NextResponse.json(

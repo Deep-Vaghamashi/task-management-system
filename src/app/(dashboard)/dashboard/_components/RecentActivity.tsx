@@ -1,62 +1,67 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+'use client';
 
-const activities = [
-    {
-        user: "Alice Smith",
-        avatar: "/avatars/alice.png", // specific avatar path or fallback
-        action: "commented on",
-        target: "Marketing Campaign",
-        time: "2 mins ago",
-        initials: "AS"
-    },
-    {
-        user: "Bob Jones",
-        action: "uploaded 3 files to",
-        target: "Website Redesign",
-        time: "15 mins ago",
-        initials: "BJ"
-    },
-    {
-        user: "Charlie Day",
-        action: "completed task",
-        target: "Update dependencies",
-        time: "1 hour ago",
-        initials: "CD"
-    },
-    {
-        user: "Dana White",
-        action: "created project",
-        target: "Q4 Roadmap",
-        time: "3 hours ago",
-        initials: "DW"
-    },
-    {
-        user: "Evan Wright",
-        action: "changed status of",
-        target: "Homepage Hero",
-        time: "5 hours ago",
-        initials: "EW"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { formatDistanceToNow } from 'date-fns';
+
+// Define the shape of the data we expect from the database
+interface ActivityItem {
+    HistoryID: number;
+    ChangeType: string;
+    ChangeTime: Date;
+    User: {
+        UserName: string;
+    };
+    Task: {
+        Title: string;
+    };
+}
+
+interface RecentActivityProps {
+    activities: ActivityItem[];
+}
+
+export function RecentActivity({ activities }: RecentActivityProps) {
+    if (activities.length === 0) {
+        return (
+            <div className="text-sm text-muted-foreground pl-2">
+                No recent activity found.
+            </div>
+        );
     }
-]
 
-export function RecentActivity() {
     return (
         <div className="relative space-y-8 pl-10 before:absolute before:left-4 before:top-2 before:h-full before:w-[1px] before:bg-border">
-            {activities.map((activity, index) => (
-                <div key={index} className="relative pl-6">
-                    <Avatar className="absolute -left-0 top-0 h-9 w-9 border border-background">
-                        <AvatarFallback>{activity.initials}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col space-y-1 ml-4">
-                        <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-foreground">{activity.user}</span>{" "}
-                            {activity.action}{" "}
-                            <span className="font-medium text-foreground">{activity.target}</span>
-                        </p>
-                        <span className="text-xs text-muted-foreground">{activity.time}</span>
+            {activities.map((activity) => {
+                // Generate initials from UserName
+                const initials = activity.User.UserName
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .substring(0, 2);
+
+                return (
+                    <div key={activity.HistoryID} className="relative pl-6">
+                        <Avatar className="absolute -left-0 top-0 h-9 w-9 border border-background">
+                            <AvatarFallback>{initials}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col space-y-1 ml-4">
+                            <p className="text-sm text-muted-foreground">
+                                <span className="font-medium text-foreground">
+                                    {activity.User.UserName}
+                                </span>{" "}
+                                {activity.ChangeType.toLowerCase()}{" "}
+                                <span className="font-medium text-foreground">
+                                    {activity.Task.Title}
+                                </span>
+                            </p>
+                            <span className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(new Date(activity.ChangeTime), { addSuffix: true })}
+                            </span>
+                        </div>
                     </div>
-                </div>
-            ))}
+                );
+            })}
         </div>
-    )
+    );
 }

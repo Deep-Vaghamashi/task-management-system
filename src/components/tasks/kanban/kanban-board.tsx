@@ -10,10 +10,8 @@ import {
     TouchSensor,
     DragEndEvent,
     DragStartEvent,
-    DragOverEvent,
     closestCorners,
 } from "@dnd-kit/core"
-import { arrayMove } from "@dnd-kit/sortable"
 import {
     addDays,
     format,
@@ -24,36 +22,26 @@ import {
     subWeeks,
     addWeeks,
 } from "date-fns"
-import { ChevronLeft, ChevronRight, LayoutKanban, LayoutList } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { Task } from "@/components/tasks/columns"
+import { TaskWithRelations } from "@/components/dashboard/tasks/types"
 import { KanbanColumn } from "./kanban-column"
 import { TaskCard } from "./task-card"
 import { createPortal } from "react-dom"
 
 interface KanbanBoardProps {
-    initialTasks: Task[] // In a real app, these would have dates
+    tasks: TaskWithRelations[]
+    onDateChange: (taskId: number, newDate: string | null) => void
+    onTaskClick: (task: TaskWithRelations) => void
 }
 
-// Extended Task type for local state to include date
-type KanbanTask = Task & { dueDate?: string | null }
-
-export function KanbanBoard({ initialTasks }: KanbanBoardProps) {
-    // Mocking initial dates for demo purposes
-    const [tasks, setTasks] = React.useState<KanbanTask[]>(() =>
-        initialTasks.map((t, i) => ({
-            ...t,
-            // Randomly assign some to this week, some to backlog
-            dueDate: i % 3 === 0 ? null : format(addDays(new Date(), (i % 7) - 1), "yyyy-MM-dd"),
-        }))
-    )
-
+export function KanbanBoard({ tasks, onDateChange, onTaskClick }: KanbanBoardProps) {
     const [currentWeekStart, setCurrentWeekStart] = React.useState(
-        startOfWeek(new Date(), { weekStartsOn: 1 }) // Monday start
+        startOfWeek(new Date(), { weekStartsOn: 1 })
     )
-    const [activeTask, setActiveTask] = React.useState<KanbanTask | null>(null)
+    const [activeTask, setActiveTask] = React.useState<TaskWithRelations | null>(null)
     const [viewMode, setViewMode] = React.useState<"week" | "3day">("week")
 
     const sensors = useSensors(
@@ -67,26 +55,27 @@ export function KanbanBoard({ initialTasks }: KanbanBoardProps) {
         const allDays = eachDayOfInterval({ start, end })
 
         if (viewMode === "3day") {
-            // Just show Mon-Wed or Today-Today+2 for better mobile demo?
-            // Let's just stick to showing the first 3 days of the week for simplicity or slice
             return allDays.slice(0, 3)
         }
         return allDays
     }, [currentWeekStart, viewMode])
 
+    // Tasks without a due date go to backlog
     const backlogTasks = React.useMemo(
-        () => tasks.filter((t) => !t.dueDate),
+        () => tasks.filter((t) => !t.DueDate),
         [tasks]
     )
 
     const getTasksForDate = (date: Date) => {
-        const dateStr = format(date, "yyyy-MM-dd")
-        return tasks.filter((t) => t.dueDate === dateStr)
+        return tasks.filter((t) => {
+            if (!t.DueDate) return false
+            return isSameDay(new Date(t.DueDate), date)
+        })
     }
 
     const handleDragStart = (event: DragStartEvent) => {
         const { active } = event
-        const task = tasks.find((t) => t.id === active.id)
+        const task = tasks.find((t) => String(t.TaskID) === String(active.id))
         if (task) setActiveTask(task)
     }
 
@@ -98,45 +87,42 @@ export function KanbanBoard({ initialTasks }: KanbanBoardProps) {
             return
         }
 
-        const activeId = active.id as string
-        const overId = over.id as string
+        const activeId = Number(active.id)
+        const overId = String(over.id)
 
-        const activeTask = tasks.find(t => t.id === activeId)
-        if (!activeTask) return
+        const draggedTask = tasks.find(t => t.TaskID === activeId)
+        if (!draggedTask) {
+            setActiveTask(null)
+            return
+        }
 
         // Determine destination date
         let newDate: string | null = null
 
-        // Check if dropped on a column container (which has ID = date string or 'backlog')
         if (overId === "backlog") {
             newDate = null
         } else if (overId.match(/^\d{4}-\d{2}-\d{2}$/)) {
             newDate = overId
         } else {
-            // Dropped on another task? Find that task's column
-            const overTask = tasks.find(t => t.id === overId)
-            if (overTask) {
-                newDate = overTask.dueDate || null
+            // Dropped on another task — find that task's date
+            const overTask = tasks.find(t => String(t.TaskID) === overId)
+            if (overTask && overTask.DueDate) {
+                newDate = format(new Date(overTask.DueDate), "yyyy-MM-dd")
             } else {
-                // Fallback if we can't determine
-                setActiveTask(null)
-                return
+                newDate = null
             }
         }
 
-        if (activeTask.dueDate !== newDate) {
-            // Update task date
-            setTasks((prev) =>
-                prev.map((t) =>
-                    t.id === activeId ? { ...t, dueDate: newDate } : t
-                )
-            )
+        const currentDate = draggedTask.DueDate
+            ? format(new Date(draggedTask.DueDate), "yyyy-MM-dd")
+            : null
+
+        if (currentDate !== newDate) {
+            onDateChange(activeId, newDate)
             const msg = newDate
                 ? `Moved to ${format(new Date(newDate), "EEEE, MMM d")}`
                 : "Moved to Backlog"
             toast.success(msg)
-            // TODO: Call API to update task
-            console.log(`Update Task ${activeId} with date: ${newDate}`)
         }
 
         setActiveTask(null)
@@ -174,6 +160,14 @@ export function KanbanBoard({ initialTasks }: KanbanBoardProps) {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={() => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
+                    >
+                        Today
+                    </Button>
                     <div className="rounded-lg border bg-muted p-1">
                         <Button
                             variant={viewMode === "week" ? "default" : "ghost"}
@@ -215,13 +209,14 @@ export function KanbanBoard({ initialTasks }: KanbanBoardProps) {
                                 id="backlog"
                                 title="Unscheduled"
                                 tasks={backlogTasks}
+                                onTaskClick={onTaskClick}
                             />
                         </div>
                     </div>
 
                     {/* Calendar Columns */}
                     <div className="flex flex-1 flex-col">
-                        <div className="grid h-full flex-1 grid-cols-7 gap-3">
+                        <div className={`grid h-full flex-1 gap-3 ${viewMode === "3day" ? "grid-cols-3" : "grid-cols-7"}`}>
                             {days.map((day) => {
                                 const dateStr = format(day, "yyyy-MM-dd")
                                 const dayTasks = getTasksForDate(day)
@@ -235,6 +230,7 @@ export function KanbanBoard({ initialTasks }: KanbanBoardProps) {
                                             subtitle={format(day, "d")}
                                             tasks={dayTasks}
                                             isToday={isTodayVal}
+                                            onTaskClick={onTaskClick}
                                         />
                                     </div>
                                 )

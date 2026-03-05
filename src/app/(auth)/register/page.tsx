@@ -3,71 +3,129 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, User, Github, Chrome } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ModeToggle } from "@/components/mode-toggle";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
+// ── Zod Validation Schema ──────────────────────────────────────────────
+const registerSchema = z
+  .object({
+    username: z
+      .string()
+      .min(1, "Full name is required")
+      .min(2, "Name must be at least 2 characters")
+      .max(50, "Name must be less than 50 characters"),
+    email: z
+      .string()
+      .min(1, "Email is required")
+      .email("Please enter a valid email address"),
+    phone: z.string().optional(),
+    password: z
+      .string()
+      .min(1, "Password is required")
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+      .regex(/[0-9]/, "Password must contain at least one number"),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
+
+// ── Register Page Component ────────────────────────────────────────────
 export default function RegisterPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [role, setRole] = useState("Manager");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsError, setTermsError] = useState(false);
 
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      username: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // ── Form Submit Handler ────────────────────────────────────────────
+  const onSubmit = async (data: RegisterFormValues) => {
+    if (!termsAccepted) {
+      setTermsError(true);
+      return;
+    }
+    setTermsError(false);
     setIsLoading(true);
 
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match!");
-      setIsLoading(false);
-      return;
-    }
-
-    if (formData.password.length < 8) {
-      toast.error("Password must be at least 8 characters long.");
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      // Step 1: Register the user
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username: formData.username,
-          email: formData.email,
-          password: formData.password
+          username: data.username.trim(),
+          email: data.email.trim(),
+          password: data.password,
+          phone: data.phone?.trim() || undefined,
+          role,
         }),
       });
 
-      if (response.ok) {
-        toast.success("Welcome to Daily Life!", {
-          description: "Your account has been created.",
-        });
-        setTimeout(() => {
-          router.push('/login');
-        }, 1500);
-      } else {
+      if (!response.ok) {
         const errorData = await response.json();
-        toast.error(`Error: ${errorData.error || "Registration failed"}`);
+        toast.error(errorData.error || "Registration failed");
+        setIsLoading(false);
+        return;
+      }
+
+      toast.success("Account created!", {
+        description: "Sending verification code to your email...",
+      });
+
+      // Step 2: Trigger email verification
+      const verifyResponse = await fetch("/api/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: data.email.trim() }),
+      });
+
+      if (verifyResponse.ok) {
+        const verifyData = await verifyResponse.json();
+        // Redirect to the verification page
+        router.push(
+          `/verify-email?email=${encodeURIComponent(data.email.trim())}&token=${encodeURIComponent(verifyData.token)}`
+        );
+      } else {
+        // Registration succeeded but verification email failed — go to login
+        toast.warning("Account created but verification email failed. You can login directly.", {
+          duration: 5000,
+        });
+        setTimeout(() => router.push("/login"), 2000);
       }
     } catch (error) {
       toast.error("Something went wrong. Please try again.");
@@ -78,42 +136,87 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen w-full">
-
-      {/* --- Left Side: Sidebar / Brand --- */}
+      {/* ── Left Side: Brand Panel ───────────────────────────────── */}
       <div className="hidden lg:flex w-[40%] flex-col justify-between bg-zinc-900 p-10 text-white relative overflow-hidden">
-        {/* Abstract Background Pattern */}
-        <div className="absolute inset-0 opacity-20 pointer-events-none">
-          <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <path d="M0 100 C 20 0 50 0 100 100 Z" fill="currentColor" />
+        {/* Decorative background */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-0 w-80 h-80 bg-blue-600/10 rounded-full -translate-x-1/3 -translate-y-1/3 blur-3xl" />
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-violet-600/10 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
+          <svg className="absolute inset-0 h-full w-full opacity-[0.03]" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+              <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5" />
+            </pattern>
+            <rect width="100" height="100" fill="url(#grid)" />
           </svg>
         </div>
 
+        {/* Logo */}
         <div className="relative z-10">
-          <div className="flex items-center gap-2 font-bold text-xl">
-            <div className="h-8 w-8 rounded bg-white/20 flex items-center justify-center">D</div>
-            Daily Life
+          <div className="flex items-center gap-3 font-bold text-xl">
+            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-white font-bold shadow-lg">
+              DL
+            </div>
+            <span className="text-xl tracking-tight">Daily Life</span>
           </div>
         </div>
 
-        <div className="relative z-10 mt-auto mb-20">
-          <blockquote className="space-y-2">
-            <p className="text-lg font-medium leading-relaxed">
-              "Consistency is not about perfection. It’s about simply refusing to give up. build your daily flow and watch your life transform."
+        {/* Steps */}
+        <div className="relative z-10 space-y-6 my-auto">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Get started in<br />
+            <span className="text-violet-400">3 simple steps.</span>
+          </h2>
+          <div className="space-y-5 text-sm">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 h-7 w-7 rounded-full bg-violet-500/20 border border-violet-500/30 flex items-center justify-center shrink-0">
+                <span className="text-violet-400 font-semibold text-xs">1</span>
+              </div>
+              <div>
+                <p className="text-white font-medium">Create your account</p>
+                <p className="text-zinc-500 text-xs">Fill in your details and choose a role</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 h-7 w-7 rounded-full bg-violet-500/20 border border-violet-500/30 flex items-center justify-center shrink-0">
+                <span className="text-violet-400 font-semibold text-xs">2</span>
+              </div>
+              <div>
+                <p className="text-white font-medium">Verify your email</p>
+                <p className="text-zinc-500 text-xs">Enter the 6-digit code we send you</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 h-7 w-7 rounded-full bg-violet-500/20 border border-violet-500/30 flex items-center justify-center shrink-0">
+                <span className="text-violet-400 font-semibold text-xs">3</span>
+              </div>
+              <div>
+                <p className="text-white font-medium">Start managing tasks</p>
+                <p className="text-zinc-500 text-xs">Create projects, invite your team, and go</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quote */}
+        <div className="relative z-10 mt-auto">
+          <blockquote className="space-y-2 border-l-2 border-violet-500/50 pl-4">
+            <p className="text-sm font-medium leading-relaxed text-zinc-300">
+              &quot;The best time to organize your life was yesterday. The second best time is right now.&quot;
             </p>
-            <footer className="text-sm opacity-80">— The Daily Philosophy</footer>
+            <footer className="text-xs text-zinc-500">— Daily Life Philosophy</footer>
           </blockquote>
         </div>
       </div>
 
-      {/* --- Right Side: Form Content --- */}
+      {/* ── Right Side: Registration Form ────────────────────────── */}
       <div className="flex flex-1 flex-col items-center justify-center p-8 bg-background relative transition-colors duration-300">
-
-        {/* Theme Toggle (Top Right) */}
+        {/* Theme Toggle */}
         <div className="absolute top-4 right-4 md:top-8 md:right-8">
           <ModeToggle />
         </div>
 
         <div className="w-full max-w-sm space-y-6">
+          {/* Header */}
           <div className="flex flex-col space-y-2 text-center">
             <h1 className="text-2xl font-bold tracking-tight">Create your Daily Life</h1>
             <p className="text-sm text-muted-foreground">
@@ -121,21 +224,21 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Full Name */}
             <div className="space-y-2">
               <Label htmlFor="username">Full Name</Label>
-              <div className="relative">
-                <Input
-                  id="username"
-                  name="username"
-                  placeholder="Enter your name"
-                  value={formData.username}
-                  onChange={handleChange}
-                  className="pl-3"
-                  required
-                />
-              </div>
+              <Input
+                id="username"
+                placeholder="John Doe"
+                {...register("username")}
+                disabled={isLoading}
+                className={errors.username ? "border-red-500 focus-visible:ring-red-500" : ""}
+              />
+              {errors.username && (
+                <p className="text-xs text-red-500">{errors.username.message}</p>
+              )}
             </div>
 
             {/* Email */}
@@ -143,13 +246,51 @@ export default function RegisterPage() {
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
-                name="email"
                 type="email"
                 placeholder="name@example.com"
-                value={formData.email}
-                onChange={handleChange}
-                required
+                {...register("email")}
+                disabled={isLoading}
+                className={errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
               />
+              {errors.email && (
+                <p className="text-xs text-red-500">{errors.email.message}</p>
+              )}
+            </div>
+
+            {/* Phone + Role (side by side) */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+91 98765 43210"
+                  {...register("phone")}
+                  disabled={isLoading}
+                  className={errors.phone ? "border-red-500 focus-visible:ring-red-500" : ""}
+                />
+                {errors.phone && (
+                  <p className="text-xs text-red-500">{errors.phone.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Select
+                  defaultValue="Manager"
+                  value={role}
+                  onValueChange={(val) => setRole(val)}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Manager">Manager</SelectItem>
+                    <SelectItem value="Employee">Employee</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Password */}
@@ -157,13 +298,15 @@ export default function RegisterPage() {
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
-                name="password"
                 type="password"
                 placeholder="Create a password"
-                value={formData.password}
-                onChange={handleChange}
-                required
+                {...register("password")}
+                disabled={isLoading}
+                className={errors.password ? "border-red-500 focus-visible:ring-red-500" : ""}
               />
+              {errors.password && (
+                <p className="text-xs text-red-500">{errors.password.message}</p>
+              )}
             </div>
 
             {/* Confirm Password */}
@@ -171,26 +314,49 @@ export default function RegisterPage() {
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
                 id="confirmPassword"
-                name="confirmPassword"
                 type="password"
                 placeholder="Confirm your password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
+                {...register("confirmPassword")}
+                disabled={isLoading}
+                className={
+                  errors.confirmPassword ? "border-red-500 focus-visible:ring-red-500" : ""
+                }
               />
+              {errors.confirmPassword && (
+                <p className="text-xs text-red-500">{errors.confirmPassword.message}</p>
+              )}
             </div>
 
             {/* Terms Checkbox */}
-            <div className="flex items-center space-x-2">
-              <Checkbox id="terms" required />
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="terms"
+                checked={termsAccepted}
+                onCheckedChange={(checked) => {
+                  setTermsAccepted(checked === true);
+                  if (checked) setTermsError(false);
+                }}
+                disabled={isLoading}
+              />
               <label
                 htmlFor="terms"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground"
+                className="text-sm leading-snug text-muted-foreground cursor-pointer"
               >
-                I agree to the <Link href="/terms" className="underline hover:text-primary">terms and conditions</Link>
+                I agree to the{" "}
+                <Link
+                  href="/terms"
+                  className="underline underline-offset-4 hover:text-primary text-primary"
+                  target="_blank"
+                >
+                  terms and conditions
+                </Link>
               </label>
             </div>
+            {termsError && (
+              <p className="text-xs text-red-500 -mt-2">You must accept the terms and conditions</p>
+            )}
 
+            {/* Submit Button */}
             <Button disabled={isLoading} className="w-full">
               {isLoading ? (
                 <>
@@ -198,36 +364,18 @@ export default function RegisterPage() {
                   Creating account...
                 </>
               ) : (
-                "Register"
+                "Create Account"
               )}
             </Button>
           </form>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" className="w-full">
-              <Chrome className="mr-2 h-4 w-4" />
-              Google
-            </Button>
-            <Button variant="outline" className="w-full">
-              <Github className="mr-2 h-4 w-4" />
-              GitHub
-            </Button>
-          </div>
-
+          {/* Login Link */}
           <p className="px-8 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="underline underline-offset-4 hover:text-primary font-medium text-primary">
+            <Link
+              href="/login"
+              className="underline underline-offset-4 hover:text-primary font-medium text-primary"
+            >
               Sign in
             </Link>
           </p>

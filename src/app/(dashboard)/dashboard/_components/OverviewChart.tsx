@@ -2,17 +2,24 @@
 
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts"
 
-const data = [
-    { name: "Mon", completed: 2 },
-    { name: "Tue", completed: 5 },
-    { name: "Wed", completed: 3 },
-    { name: "Thu", completed: 8 },
-    { name: "Fri", completed: 6 },
-    { name: "Sat", completed: 10 },
-    { name: "Sun", completed: 7 },
-]
+interface ChartDataPoint {
+    name: string;
+    completed: number;
+}
 
-export function OverviewChart() {
+interface OverviewChartProps {
+    data: ChartDataPoint[];
+}
+
+export function OverviewChart({ data }: OverviewChartProps) {
+    if (!data || data.length === 0) {
+        return (
+            <div className="h-[250px] w-full flex items-center justify-center text-muted-foreground text-sm">
+                No task completion data available yet.
+            </div>
+        );
+    }
+
     return (
         <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -35,6 +42,7 @@ export function OverviewChart() {
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
+                        allowDecimals={false}
                         tickFormatter={(value) => `${value}`}
                     />
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
@@ -49,7 +57,7 @@ export function OverviewChart() {
                                                     {label}
                                                 </span>
                                                 <span className="font-bold text-foreground">
-                                                    {payload[0].value}
+                                                    {payload[0].value} task{Number(payload[0].value) !== 1 ? 's' : ''}
                                                 </span>
                                             </div>
                                         </div>
