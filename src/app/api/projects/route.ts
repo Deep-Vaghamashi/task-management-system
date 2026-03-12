@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
         Status: body.status || "Active",
         DueDate: dueDate ? new Date(dueDate) : null,
         CreatedBy: decoded.userId,
-        // Add members if provided
+        // Add members provided
         Members: body.employeeIds && body.employeeIds.length > 0 ? {
           create: body.employeeIds.map((id: number) => ({
             UserID: id,

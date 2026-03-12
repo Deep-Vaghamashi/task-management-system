@@ -17,8 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   FolderKanban,
   Activity,
-  Clock,
-  CheckCircle2,
   Plus,
   Search,
   UserPlus,

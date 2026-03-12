@@ -11,6 +11,7 @@ import {
     ListTodo,
     BarChart3,
     UserPlus,
+    Users,
     Settings,
     LogOut,
 } from 'lucide-react';
@@ -91,6 +92,7 @@ export function Sidebar({ className, onClose }: SidebarProps) {
         {
             title: 'MANAGEMENT',
             items: [
+                { href: '/dashboard/users', label: 'Manage Users', icon: Users, role: 'Manager' },
                 { href: '/dashboard/team/invite', label: 'Invite Member', icon: UserPlus, role: 'Manager' },
                 { href: '/dashboard/settings', label: 'Settings', icon: Settings },
             ],
