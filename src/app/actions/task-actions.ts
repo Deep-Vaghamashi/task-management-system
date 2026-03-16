@@ -1,11 +1,9 @@
 'use server';
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { verify } from 'jsonwebtoken';
-
-const prisma = new PrismaClient();
 
 // Helper to get authenticated user ID
 async function getAuthUserId() {
